@@ -44,8 +44,16 @@ fn main() -> Result<()> {
     #[cfg(not(feature = "built_in"))]
     let content = fs::read_to_string(args.template_path)?;
     #[cfg(feature = "built_in")]
-    let content = match args.built_in_template {
-        BuiltInTemplate::Markdown => include_str!("../templates/markdown.hbs").to_string(),
+    let content = {
+        let binding = match args.built_in_template {
+            BuiltInTemplate::Markdown => {
+                pathbuf![env!("CARGO_MANIFEST_DIR"), "templates", "markdown.hbs"]
+            }
+        };
+        binding
+            .to_str()
+            .expect("Failed to convert path to string")
+            .to_string()
     };
     let content = reg.render_template(&content, &params)?;
 
