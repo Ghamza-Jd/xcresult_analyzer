@@ -25,7 +25,7 @@ struct Cli {
 
     #[cfg(feature = "built_in")]
     /// Built-in template
-    #[clap(short = 'b', long = "built-in")]
+    #[clap(short = 't', long = "template")]
     built_in_template: BuiltInTemplate,
 }
 
@@ -45,15 +45,12 @@ fn main() -> Result<()> {
     let content = fs::read_to_string(args.template_path)?;
     #[cfg(feature = "built_in")]
     let content = {
-        let binding = match args.built_in_template {
+        let path = match args.built_in_template {
             BuiltInTemplate::Markdown => {
                 pathbuf![env!("CARGO_MANIFEST_DIR"), "templates", "markdown.hbs"]
             }
         };
-        binding
-            .to_str()
-            .expect("Failed to convert path to string")
-            .to_string()
+        fs::read_to_string(path).expect("Failed to read built-in template")
     };
     let content = reg.render_template(&content, &params)?;
 
