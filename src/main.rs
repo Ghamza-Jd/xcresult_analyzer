@@ -1,4 +1,5 @@
 mod dba;
+mod templates;
 #[macro_use]
 mod macros;
 
@@ -8,6 +9,7 @@ use dba::Dba;
 use handlebars::Handlebars;
 use std::fs;
 use std::path::PathBuf;
+use templates::BuiltInTemplate;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -29,11 +31,6 @@ struct Cli {
     built_in_template: BuiltInTemplate,
 }
 
-#[derive(Clone, clap::ValueEnum)]
-enum BuiltInTemplate {
-    Markdown,
-}
-
 fn main() -> Result<()> {
     let args = Cli::parse();
     let reg = Handlebars::new();
@@ -44,14 +41,8 @@ fn main() -> Result<()> {
     #[cfg(not(feature = "built_in"))]
     let content = fs::read_to_string(args.template_path)?;
     #[cfg(feature = "built_in")]
-    let content = {
-        let path = match args.built_in_template {
-            BuiltInTemplate::Markdown => {
-                pathbuf![env!("CARGO_MANIFEST_DIR"), "templates", "markdown.hbs"]
-            }
-        };
-        fs::read_to_string(path).expect("Failed to read built-in template")
-    };
+    let content = args.built_in_template.template();
+
     let content = reg.render_template(&content, &params)?;
 
     fs::write(args.output_path, content)?;
